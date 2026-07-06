@@ -6,9 +6,12 @@
     <title>Live Profit & Price Calculator</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Futuristic neon glow effect */
-        .neon-border {
+        /* Futuristic neon glow effects */
+        .neon-border-cyan {
             box-shadow: 0 0 15px rgba(6, 182, 212, 0.3), inset 0 0 10px rgba(6, 182, 212, 0.1);
+        }
+        .neon-border-purple {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3), inset 0 0 10px rgba(168, 85, 247, 0.1);
         }
         /* Smooth transition for showing results */
         .fade-in {
@@ -20,9 +23,10 @@
         }
     </style>
 </head>
-<body class="bg-gray-950 text-gray-200 min-h-screen flex items-center justify-center p-4 font-sans selection:bg-cyan-500 selection:text-white">
+<body class="bg-gray-950 text-gray-200 min-h-screen flex flex-col md:flex-row items-center md:items-start justify-center p-4 gap-8 font-sans selection:bg-cyan-500 selection:text-white">
 
-    <div class="bg-gray-900 border border-cyan-500/40 p-8 rounded-2xl w-full max-w-lg neon-border transition-all duration-300">
+    <!-- 1. Live Profit Calculator (Original) -->
+    <div class="bg-gray-900 border border-cyan-500/40 p-8 rounded-2xl w-full max-w-lg neon-border-cyan transition-all duration-300">
         <h1 class="text-2xl font-bold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 uppercase tracking-widest">
             Live Profit Calculator
         </h1>
@@ -85,45 +89,131 @@
         </div>
     </div>
 
-    <script>
-        // Select all input fields with the class 'calc-input'
-        const inputs = document.querySelectorAll('.calc-input');
+    <!-- 2. Item Value & Additional Cost Calculator (New) -->
+    <div class="bg-gray-900 border border-purple-500/40 p-8 rounded-2xl w-full max-w-lg neon-border-purple transition-all duration-300">
+        <h1 class="text-2xl font-bold mb-6 text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-500 uppercase tracking-widest">
+            Item Value Calculator
+        </h1>
 
-        // Add an event listener to each input to run the function whenever the user types
+        <!-- Inputs Section -->
+        <div class="space-y-5">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Total Price (සම්පූර්ණ මිල)</label>
+                    <input type="number" id="revTotalPrice" placeholder="Rs." 
+                        class="rev-calc-input w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-gray-100 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400 transition-all">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Quantity (කෑලි ගණන)</label>
+                    <input type="number" id="revQuantity" placeholder="Qty" 
+                        class="rev-calc-input w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-gray-100 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400 transition-all">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Additional Cost (අමතර වියදම් / ගාස්තු)</label>
+                <input type="number" id="revAdditional" placeholder="Rs. (Optional)" 
+                    class="rev-calc-input w-full bg-gray-950 border border-gray-700 rounded-lg p-2.5 text-gray-100 focus:outline-none focus:border-purple-400 focus:ring-1 focus:ring-purple-400 transition-all">
+                <p class="text-xs text-gray-500 mt-1">Leave empty if none (නැත්නම් හිස්ව තියන්න)</p>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="revResultsBox" class="mt-8 hidden fade-in">
+            <h2 class="text-lg font-semibold text-gray-300 mb-4 border-b border-gray-700 pb-2">
+                Calculation Results
+            </h2>
+            
+            <div class="space-y-4 text-sm bg-gray-950 p-5 rounded-lg border border-gray-800 shadow-inner">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Base Unit Price<br><span class="text-xs text-gray-600">(මූලික එකක වටිනාකම)</span></span>
+                    <span id="revBaseUnit" class="font-mono text-lg text-gray-300"></span>
+                </div>
+                
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-400">Added Cost Per Item<br><span class="text-xs text-gray-600">(එකකට එකතු වූ අමතර මුදල)</span></span>
+                    <span id="revAddedPerItem" class="font-mono text-lg text-pink-400"></span>
+                </div>
+
+                <div class="flex justify-between items-center pt-3 border-t border-gray-800">
+                    <span class="text-gray-300 font-medium">Final Unit Price<br><span class="text-xs text-gray-500">(අවසාන එකක මිල)</span></span>
+                    <span id="revFinalUnit" class="font-mono text-2xl text-purple-400 font-bold drop-shadow-[0_0_8px_rgba(168,85,247,0.5)] transition-all"></span>
+                </div>
+
+                <div class="flex justify-between items-center mt-2">
+                    <span class="text-gray-500">Total Final Cost<br><span class="text-xs text-gray-600">(අමතර මුදල් සමඟ මුළු එකතුව)</span></span>
+                    <span id="revTotalFinal" class="font-mono text-md text-gray-400"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Original Profit Calculator Logic ---
+        const inputs = document.querySelectorAll('.calc-input');
         inputs.forEach(input => {
             input.addEventListener('input', calculateProfitLive);
         });
 
         function calculateProfitLive() {
-            // Get input values
             const name = document.getElementById('productName').value || 'Unnamed Product';
             const totalCost = parseFloat(document.getElementById('totalCost').value);
             const quantity = parseFloat(document.getElementById('quantity').value);
             const profitPerItem = parseFloat(document.getElementById('profitPerItem').value);
             const resultsBox = document.getElementById('resultsBox');
 
-            // Check if all necessary numbers are provided and valid
             if (isNaN(totalCost) || isNaN(quantity) || isNaN(profitPerItem) || quantity <= 0) {
-                // Hide results if data is incomplete
                 resultsBox.classList.add('hidden');
                 return;
             }
 
-            // Core Logic Calculations
             const unitCost = totalCost / quantity;               
             const sellingPrice = unitCost + profitPerItem;       
             const totalRevenue = sellingPrice * quantity;        
             const totalProfit = totalRevenue - totalCost;        
 
-            // Display Results
             document.getElementById('resName').textContent = name;
             document.getElementById('resUnitCost').textContent = 'Rs. ' + unitCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('resSellingPrice').textContent = 'Rs. ' + sellingPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('resTotalRevenue').textContent = 'Rs. ' + totalRevenue.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('resTotalProfit').textContent = 'Rs. ' + totalProfit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
-            // Show the result box smoothly
             resultsBox.classList.remove('hidden');
+        }
+
+        // --- 2. New Item Value Calculator Logic ---
+        const revInputs = document.querySelectorAll('.rev-calc-input');
+        revInputs.forEach(input => {
+            input.addEventListener('input', calculateReverseLive);
+        });
+
+        function calculateReverseLive() {
+            const totalPrice = parseFloat(document.getElementById('revTotalPrice').value);
+            const quantity = parseFloat(document.getElementById('revQuantity').value);
+            // Default additional cost to 0 if empty or invalid
+            let additionalCost = parseFloat(document.getElementById('revAdditional').value);
+            if (isNaN(additionalCost)) additionalCost = 0;
+
+            const revResultsBox = document.getElementById('revResultsBox');
+
+            if (isNaN(totalPrice) || isNaN(quantity) || quantity <= 0) {
+                revResultsBox.classList.add('hidden');
+                return;
+            }
+
+            // Calculations
+            const baseUnit = totalPrice / quantity;
+            const addedPerItem = additionalCost / quantity;
+            const finalUnit = baseUnit + addedPerItem;
+            const totalFinalCost = totalPrice + additionalCost;
+
+            // Display Results
+            document.getElementById('revBaseUnit').textContent = 'Rs. ' + baseUnit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('revAddedPerItem').textContent = '+ Rs. ' + addedPerItem.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('revFinalUnit').textContent = 'Rs. ' + finalUnit.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('revTotalFinal').textContent = 'Rs. ' + totalFinalCost.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+            revResultsBox.classList.remove('hidden');
         }
     </script>
 </body>
